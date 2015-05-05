@@ -35,8 +35,7 @@ function Get-InfoTriage{
             
         }
 
-        #Powerview reference
-        #removing this and updating
+        
         "-------------------------"
         "Local Group Memberships"
         "-------------------------`n"
