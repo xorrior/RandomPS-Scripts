@@ -4,6 +4,23 @@ function Get-InfoTriage{
     .SYNOPSIS
     Collects all revelant information about a host and the current user context.
 
+    .DESCRIPTION
+    After gaining initial access to a target host. It is recommended to gain situational awareness by enumerating the user and system. 
+
+    .PARAMETER User
+    Specify a user to enumerate. The default is the current user. 
+
+    .PARAMETER keyword
+    Specify a keyword to use in file searches. 
+
+    .PARAMETER UserInfo
+    Enumerate user information
+
+    .PARAMETER SysInfo
+    Enumerate system information of the current host
+
+    .PARAMETER NetInfo
+    Enumerate the current network
 
     #>
 
@@ -137,7 +154,11 @@ function Get-InfoTriage{
 
     }
       
+    #Coming soon
+    if($SysInfo){}
 
+    #Coming soon
+    if($NetInfo){}
     
    
 
