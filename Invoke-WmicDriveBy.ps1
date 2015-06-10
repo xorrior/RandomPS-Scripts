@@ -67,11 +67,11 @@ function Invoke-WmicDriveBy{
   .PARAMETER URL
   URL for the powershell web delivery. Required. 
 
-  .PARAMETER TARGET
-  Host to target. Can be a hostname, IP address, or FQDN. Default is set to localhost. 
+  .PARAMETER TARGETs
+  Host or array of hosts to target. Can be a hostname, IP address, or FQDN. Default is set to localhost. 
 
   #>
-
+  [CmdletBinding()]
   param(
     #Parameter assignment
     [Parameter(Mandatory = $True, Position = 0)] 
