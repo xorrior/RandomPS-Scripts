@@ -1,4 +1,4 @@
-function Invoke-WinEnum{
+function Invoke-WindowsEnum{
 
     <#
     .SYNOPSIS
@@ -109,7 +109,7 @@ function Invoke-WinEnum{
         "Interesting Files"
         "----------------------------------"
         if($keyword){
-            $interestingFiles = Get-ChildItem -Path "C:\" -Recurse -Include @($keyword) -ea SilentlyContinue | where {$_.Mode.StartsWith('d') -eq $False} | Sort-Object {$_.LastAccessTime} 
+            $interestingFiles = Get-ChildItem -Path "C:\Users\$Username" -Recurse -Include @($keyword) -ea SilentlyContinue | where {$_.Mode.StartsWith('d') -eq $False} | Sort-Object {$_.LastAccessTime} 
             if($interestingFiles){
                 foreach($file in $interestingFiles){
                     "Filepath: " + $file.FullName 
@@ -118,7 +118,7 @@ function Invoke-WinEnum{
             }
         }
         else{
-            $interestingFiles = Get-ChildItem -Path "C:\" -Recurse -Include @("*.txt","*.pdf","*.docx","*.doc","*.xls","*.ppt","*pass*","*cred*") -ErrorAction SilentlyContinue | where {$_.Mode.StartsWith('d') -eq $False} | Sort-Object {$_.LastAccessTime} 
+            $interestingFiles = Get-ChildItem -Path "C:\Users\$Username" -Recurse -Include @("*.txt","*.pdf","*.docx","*.doc","*.xls","*.ppt","*pass*","*cred*") -ErrorAction SilentlyContinue | where {$_.Mode.StartsWith('d') -eq $False} | Sort-Object {$_.LastAccessTime} 
             if($interestingFiles){
                 foreach($file in $interestingFiles){
                     "Filepath: " + $file.FullName 
@@ -321,13 +321,6 @@ function Invoke-WinEnum{
 
 
         }
-
-
-
-
-
-        
-
 
 
     }
