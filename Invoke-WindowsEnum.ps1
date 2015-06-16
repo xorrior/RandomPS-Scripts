@@ -2,7 +2,9 @@ function Invoke-WindowsEnum{
 
     <#
     .SYNOPSIS
-    Collects all revelant information about a host and the current user context.
+    Enumerates the local host to gather information about the current user, AD and local group memberships, last 5 files opened, clipboard contents, and interesting files in the 
+    Users profile. Also enumerates system information such as the OS version, Services, installed applications, available shares, Anti-Virus Software and current status, and when the last windows update 
+    was installed. 
 
     .DESCRIPTION
     This script conducts user, system, and network enumeration using the current user context or with a specified user and/or keyword. 
@@ -35,16 +37,22 @@ function Invoke-WindowsEnum{
 
 
 #function for enumerating user informtaion
-    function Get-UserInfo{
+    function Get-UserInfo
+    {
         #check if the $user param has been defined 
-        if($User){
+        if($User)
+        {
             "UserName: $User"
+            "-----------------`n"
             $DomainUser = $User 
+        
         }
-        else{
+        else
+        {
             $DomainUser = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
             $UserName = $DomainUser.split('\')[-1]
             "UserName: $UserName"
+            "-------------------`n"
         }
 
         #Grab the local group memberships of the user 
@@ -60,12 +68,14 @@ function Invoke-WindowsEnum{
             $group = [ADSI]$_.psbase.path
             $group.psbase.invoke("Members") | ForEach-Object {
                 $member = $_.GetType().InvokeMember("Name", 'GetProperty', $null, $_, $null)
-                if($member -eq $UserName){
+                if($member -eq $UserName)
+                {
                     $groupname
                 }
             }
         }
 
+        "`n"
         #Grab all the Active Directory Group memberships for the current user 
         "Active Directory Group Memberships"
         "----------------------------------"
@@ -86,29 +96,32 @@ function Invoke-WindowsEnum{
         #Grab the user principal object for the domain.
         $usr.GetGroups() | foreach {$_.Name}
         #Enumerate all groups the user is apart of
-
+        "`n"
 
         #Check when the user last changed their password
         "User last changed their password on"
         "------------------------------------"
-        $usr.LastPass
+        Write-Host $usr.LastPass
+        Write-Host "`n"
 
         #Grab the last files opened and sort by date accessed.
 
         "Last Five files opened"
         "-----------------------------------"
         $LastOpenedFiles = Get-ChildItem -Path "C:\Users\$Username" -Recurse -Include @("*.txt","*.pdf","*.docx","*.doc","*.xls","*.ppt") -ErrorAction SilentlyContinue | Sort-Object {$_.LastAccessTime} | select -First 5 
-        if($LastOpenedFiles){
+        if($LastOpenedFiles)
+        {
             foreach ($file in $LastOpenedFiles){
                 "Filepath: " + $file.FullName
                 "Last Accessed: " + $file.LastAccessTime    
             }
         }
-
+        "`n"
         #Search the entire host for any interesting artifacts
         "Interesting Files"
         "----------------------------------"
-        if($keyword){
+        if($keyword)
+        {
             $interestingFiles = Get-ChildItem -Path "C:\Users\$Username" -Recurse -Include @($keyword) -ea SilentlyContinue | where {$_.Mode.StartsWith('d') -eq $False} | Sort-Object {$_.LastAccessTime} 
             if($interestingFiles){
                 foreach($file in $interestingFiles){
@@ -117,16 +130,18 @@ function Invoke-WindowsEnum{
                 }
             }
         }
-        else{
+        else
+        {
             $interestingFiles = Get-ChildItem -Path "C:\Users\$Username" -Recurse -Include @("*.txt","*.pdf","*.docx","*.doc","*.xls","*.ppt","*pass*","*cred*") -ErrorAction SilentlyContinue | where {$_.Mode.StartsWith('d') -eq $False} | Sort-Object {$_.LastAccessTime} 
-            if($interestingFiles){
+            if($interestingFiles)
+            {
                 foreach($file in $interestingFiles){
                     "Filepath: " + $file.FullName 
                     "Last Accessed: " + $file.LastAccessTime
                 }
             }
         }
-
+        "`n"
         #Grab the contents of the clipboard. 
         "Clipboard contents"
         "-----------------------------------"
@@ -136,44 +151,77 @@ function Invoke-WindowsEnum{
             Add-Type -Assembly PresentationCore
             [Windows.Clipboard]::GetText() -replace "`r", '' -split "`n"  
         }
-        if([threading.thread]::CurrentThread.GetApartmentState() -eq 'MTA'){
+        if([threading.thread]::CurrentThread.GetApartmentState() -eq 'MTA')
+        {
             & powershell -Sta -Command $cmd
         }
-        else{
+        else
+        {
             $cmd
         }        
 
+        "`n"
     }
 
     #Function to enumerate the local system
-    function Get-Sysinfo{
+    function Get-Sysinfo
+    {
         #Grab the OS architecture
         "System Information"
         "------------------------"
         $OSVersion = (Get-WmiObject -class Win32_OperatingSystem).Caption
         $OSArch = (Get-WmiObject -class win32_operatingsystem).OSArchitecture
-        "OS: $OSVersion $OSArch`n"
+        "OS: $OSVersion $OSArch"
+        "`n"
 
         #Enumerate installed applications
+
+        "Services"
+        "-------------------"
+
+        Get-WmiObject -class win32_service | ForEach-Object{
+            $service = New-Object PSObject -Property @{
+                ServiceName = $_.DisplayName
+                ServiceStatus = (Get-service | where-object { $_.DisplayName -eq $ServiceName}).status
+                ServicePathtoExe = $_.PathName
+                StartupType = $_.StartMode
+            }
+            $service | Format-List 
+        }
+
+
         "Installed Appications"
         "-----------------------" 
-        if($OSArch -eq '64-bit'){
+        if($OSArch -eq '64-bit')
+        {
             $registeredAppsx64 = Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* | Select-Object DisplayName | Sort-Object DisplayName
             $registeredAppsx86 = Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\* | Select-Object DisplayName | Sort-Object DisplayName
             $registeredAppsx64 | ForEach-Object {$_.DisplayName + ' 64-bit'}
             $registeredAppsx86 | ForEach-Object {$_.DisplayName + ' 32-bit'}
         }
-        else{
+        else
+        {
             $registeredAppsx86 =  Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\* | Select-Object DisplayName | Sort-Object DisplayName
             $registeredAppsx86 | ForEach-Object {$_.DisplayName + ' 32-bit'}   
         }
+
+        "`n"
+
+
+        "Available shares"
+        "--------------------"
+
+        Get-WmiObject -class win32_share | Format-Table -auto Name, Path, Description, Status
+
+        "`n"
 
 
         #Enumerate the installed AV solution, if any
         "Anti-Virus Installed"
         "---------------------"
         $AV = Get-WmiObject -namespace root\SecurityCenter2 -class Antivirusproduct
-        if($AV){
+        if($AV)
+        {
             $AV.DisplayName
             #Microsoft does not provide documentation on values pertaining to the productState property for different AV vendors.
             #Best resource found : http://neophob.com/2010/03/wmi-query-windows-securitycenter2/
@@ -185,42 +233,52 @@ function Invoke-WindowsEnum{
             #parse the values to determine the 'health' of the AV product 
 
             #parse the wscanner value to determine if AV is enabled 
-            if($wscscanner -ge (10 -as [byte])){
+            if($wscscanner -ge (10 -as [byte]))
+            {
                 "Enabled: Yes"
             }
-            elseif($wscscanner -eq (00 -as [byte]) -or $wscscanner -eq (01 -as [byte])){
+            elseif($wscscanner -eq (00 -as [byte]) -or $wscscanner -eq (01 -as [byte]))
+            {
                 "Enabled: No"
             }
-            else{
+            else
+            {
                 "Enabled: Unknown"
             }
 
             #Determine if the AV definitions are up to date
-            if($wscupdated -eq (00 -as [byte])){
+            if($wscupdated -eq (00 -as [byte]))
+            {
                 "Updated: Yes"
             }
-            elseif($wscupdated -eq (10 -as [byte])){
+            elseif($wscupdated -eq (10 -as [byte]))
+            {
                 "Updated: No"
             }
-            else{
+            else
+            {
                 "Updated: Unknown"
             }
 
 
 
         }
-        else{
+        else
+        {
             "Anti-Virus not installed."
         }
-
+        "`n"
         "Windows Last Updated"
-        "--------------------"
+        "--------------------`n"
 
         $Lastupdate = Get-HotFix | Sort-Object InstalledOn -Descending | Select-Object InstalledOn -First 1
-        If($Lastupdate){
+        If($Lastupdate)
+        {
             $Lastupdate.InstalledOn | Out-Host
+            "`n"
         }
-        else{
+        else
+        {
             "Unknown`n"
         }
 
@@ -230,12 +288,13 @@ function Invoke-WindowsEnum{
 
 
 
-    function Get-NetInfo{
+    function Get-NetInfo
+    {
 
 
         #Check if the host is dual homed 
         "Network Adapters"
-        "----------------------"
+        "----------------------`n"
         #http://thesurlyadmin.com/2013/05/20/using-powershell-to-get-adapter-information/
 
         $NetAdapters = Get-WmiObject -class win32_networkadapter -Filter "NetConnectionStatus='2'"
@@ -243,20 +302,22 @@ function Invoke-WindowsEnum{
             $config = Get-WmiObject -class win32_networkadapterconfiguration -Filter "Index = '$($Adapter.Index)'"
             "Adapter: " + $Adapter.Name
             "IP Address: "
-            if($config.IPAddress -is [system.array]){
+            if($config.IPAddress -is [system.array])
+            {
                 $config.IPAddress[0]
             }
-            else{
+            else
+            {
                 $config.IPAddress
             }
             "Mac Address: " + $Config.MacAddress
 
         }
 
-       
+       "`n"
         
         "Mapped Network Drives"
-        "----------------------"
+        "----------------------`n"
         #Device type 4 is specifically for network drives 
         Get-WmiObject -class win32_logicaldisk | where-object {$_.DeviceType -eq 4} | ForEach-Object{
             $NetPath = $_.ProviderName
@@ -272,9 +333,9 @@ function Invoke-WindowsEnum{
 
         #Enumerate firewall rules and parse out the interesting rules. 
         #Work-in-progress, coming soon.   
-
+        "`n"
         "Firewall Information"
-        "----------------------"
+        "----------------------`n"
         #Create the firewall com object to enumerate 
         $fw = New-Object -ComObject HNetCfg.FwPolicy2 
         #Retrieve all firewall rules 
@@ -288,38 +349,26 @@ function Invoke-WindowsEnum{
 
         #Retrieve the profile type in use and the current rules
 
-        $fwprofiletype = $profiletypes.Get_Item($fw.CurrentProfileTypes)
+        $fwprofiletype = $fwprofiletypes.Get_Item($fw.CurrentProfileTypes)
         $fwrules = $fw.rules
 
         "Current Firewall Profile Type in use: $fwprofiletype"
 
         #enumerate the firewall rules
-        $fwrules | ForEach-Object {
-            $AppName = $_.Name   
-            $Proto = $fwProtocols.Get_Item($_.Protocol)
-            $IngressEgress = $fwdirection.Get_Item($_.Direction)
-            $Action = $fwaction.Get_Item($_.Action)
-            $localAddr = $_.LocalAddresses
-            $localPort = $_.LocalPorts
-            $RemoteAddr = $_.RemoteAddresses
-            $RemotePort = $_.RemotePorts
-
+        $fwrules | ForEach-Object{
             #Create custom object to hold properties for each firewall rule 
             $FirewallRule = New-Object PSObject -Property @{
-                ApplicationName = $AppName
-                Protocol = $Proto
-                Direction = $IngressEgress
-                Action = $Action 
-                LocalIP = $localAddr
-                LocalPort = $localPort
-                RemoteIP = $RemoteAddr
-                RemotePort = $RemotePort
+                ApplicationName = $_.Name
+                Protocol = $fwProtocols.Get_Item($_.Protocol)
+                Direction = $fwdirection.Get_Item($_.Direction)
+                Action = $fwaction.Get_Item($_.Action)
+                LocalIP = $_.LocalAddresses
+                LocalPort = $_.LocalPorts
+                RemoteIP = $_.RemoteAddresses
+                RemotePort = $_.RemotePorts
             }
 
-            $FirewallRule | Format-Table -auto -wrap ApplicationName, LocalIP, Localport, RemoteIP, RemotePort, IngressEgress, Action
-
-
-
+            $FirewallRule | Format-List
         }
 
 
