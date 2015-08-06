@@ -122,7 +122,7 @@ function Invoke-WindowsEnum{
         }
         if($script:LastOpenedFiles)
         {
-            $script:LastOpenedFiles | select FullName, LastAccessTime -First 5 | Format-Table -AutoSize
+            $script:LastOpenedFiles | Sort-Object LastAccessTime -Descending | select FullName, LastAccessTime -First 5 | Format-Table -AutoSize
         }
         "`n"
         #Search the entire host for any interesting artifacts owned by the user
@@ -140,7 +140,7 @@ function Invoke-WindowsEnum{
                 }
             } 
             if($script:NewestInterestingFiles){
-                $script:NewestInterestingFiles | Select-Object FullName, LastAccessTime | Format-Table -AutoSize
+                $script:NewestInterestingFiles | Sort-Object LastAccessTime -Descending | Select-Object FullName, LastAccessTime | Format-Table -AutoSize
             }
         }
         else
@@ -155,7 +155,7 @@ function Invoke-WindowsEnum{
             }
             if($script:NewestInterestingFiles)
             {
-                $script:NewestInterestingFiles | Select-Object FullName, LastAccessTime | Format-Table -AutoSize
+                $script:NewestInterestingFiles | Sort-Object LastAccessTime -Descending | Select-Object FullName, LastAccessTime | Format-Table -AutoSize
             }
         }
         "`n"
@@ -206,7 +206,7 @@ function Invoke-WindowsEnum{
             $script:AllServices += $service  
         }
 
-        $script:AllServices | Format-Table -AutoSize
+        $script:AllServices | Select ServicePathtoExe, ServiceName | Format-Table -AutoSize
 
 
         "Installed Appications"
@@ -215,13 +215,13 @@ function Invoke-WindowsEnum{
         {
             $registeredAppsx64 = Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* | Select-Object DisplayName | Sort-Object DisplayName
             $registeredAppsx86 = Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\* | Select-Object DisplayName | Sort-Object DisplayName
-            $registeredAppsx64 | ForEach-Object {$_.DisplayName + ' 64-bit'}
-            $registeredAppsx86 | ForEach-Object {$_.DisplayName + ' 32-bit'}
+            $registeredAppsx64 | Where-Object {$_.DisplayName -ne ' '} | Select-Object DisplayName | Format-Table -AutoSize
+            $registeredAppsx86 | Where-Object {$_.DisplayName -ne ' '} | Select-Object DisplayName | Format-Table -AutoSize
         }
         else
         {
             $registeredAppsx86 =  Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\* | Select-Object DisplayName | Sort-Object DisplayName
-            $registeredAppsx86 | ForEach-Object {$_.DisplayName + ' 32-bit'}   
+            $registeredAppsx86 | Where-Object {$_.DisplayName -ne ' '} | Select-Object DisplayName | Format-Table -AutoSize  
         }
 
         "`n"
@@ -230,7 +230,7 @@ function Invoke-WindowsEnum{
         "Available shares"
         "--------------------"
 
-        Get-WmiObject -class win32_share | Format-Table -auto Name, Path, Description, Status
+        Get-WmiObject -class win32_share | Format-Table -AutoSize Name, Path, Description, Status
 
         "`n"
 
@@ -390,7 +390,7 @@ function Invoke-WindowsEnum{
 
             
         } 
-        $script:AllFWRules | Format-Table -Auto
+        $script:AllFWRules | Select-Object Action, Direction, RemoteIP, RemotePort, LocalPort, ApplicationName | Format-Table -Auto
 
     }
 
