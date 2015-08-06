@@ -9,7 +9,7 @@ function Invoke-WindowsEnum{
     .DESCRIPTION
     This script conducts user, system, and network enumeration using the current user context or with a specified user and/or keyword. 
 
-    .PARAMETER User
+    .PARAMETER UserName
     Specify a user to enumerate. The default is the current user context. 
 
     .PARAMETER keywords
@@ -18,12 +18,12 @@ function Invoke-WindowsEnum{
     .EXAMPLE
     Conduct enumeration with a keyword for file searches. 
     
-    Invoke-WinEnum -keyword "putty"
+    Invoke-WindowsEnum -keyword "putty"
     
     .EXAMPLE
     Conduct enumeration with a username and keyword
     
-    Invoke-WinEnum -User "sandersb" 
+    Invoke-WindowsEnum -User "sandersb" 
 
     .LINK
     https://github.com/xorrior/RandomPS-Scripts/blob/master/Invoke-WindowsEnum.ps1
@@ -35,7 +35,7 @@ function Invoke-WindowsEnum{
         [Parameter(Mandatory=$False,Position=0)]
         [string]$UserName,
         [Parameter(Mandatory=$False,Position=1)]
-        [string[]]$keyword
+        [string[]]$keywords
     )
 
 
@@ -129,7 +129,7 @@ function Invoke-WindowsEnum{
         "Interesting Files"
         "----------------------------------"
         $script:NewestInterestingFiles = @()
-        if($keyword)
+        if($keywords)
         {
             $AllInterestingFiles = Get-ChildItem -Path "C:\" -Recurse -Include $keywords -ea SilentlyContinue | where {$_.Mode.StartsWith('d') -eq $False} | Sort-Object {$_.LastAccessTime}
             $AllInterestingFiles | ForEach-Object {
