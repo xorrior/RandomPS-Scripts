@@ -2,8 +2,8 @@ function Invoke-WindowsEnum{
 
     <#
     .SYNOPSIS
-    Enumerates the local host to gather information about the current user, AD and local group memberships, last 5 files opened, clipboard contents, and interesting files in the 
-    Users profile. Also enumerates system information such as the OS version, Services, installed applications, available shares, Anti-Virus Software and current status, and when the last windows update 
+    Enumerates the local host to gather information about the current user, AD and local group memberships, last 5 files opened, clipboard contents, and interesting files owned by the user. 
+    Also enumerates system information such as the OS version, Services, installed applications, available shares, Anti-Virus Software and current status, firewall rules, and when the last windows update 
     was installed. 
 
     .DESCRIPTION
@@ -12,8 +12,8 @@ function Invoke-WindowsEnum{
     .PARAMETER User
     Specify a user to enumerate. The default is the current user context. 
 
-    .PARAMETER keyword
-    Specify a keyword to use in file searches. 
+    .PARAMETER keywords
+    Specify a keyword or array of keywords to use in file searches. 
     
     .EXAMPLE
     Conduct enumeration with a keyword for file searches. 
@@ -25,14 +25,17 @@ function Invoke-WindowsEnum{
     
     Invoke-WinEnum -User "sandersb" 
 
+    .LINK
+    https://github.com/xorrior/RandomPS-Scripts/blob/master/Invoke-WindowsEnum.ps1
+
     #>
 
     [CmdletBinding()]
     Param(
         [Parameter(Mandatory=$False,Position=0)]
-        [string]$User,
+        [string]$UserName,
         [Parameter(Mandatory=$False,Position=1)]
-        [string]$keyword
+        [string[]]$keyword
     )
 
 
@@ -40,11 +43,11 @@ function Invoke-WindowsEnum{
     function Get-UserInfo
     {
         #check if the $user param has been defined 
-        if($User)
+        if($UserName)
         {
-            "UserName: $User"
+            "UserName: $UserName"
             "-----------------`n"
-            $DomainUser = $User 
+            $DomainUser = $UserName   
         
         }
         else
@@ -104,41 +107,55 @@ function Invoke-WindowsEnum{
         Write-Host $usr.LastPass
         Write-Host "`n"
 
-        #Grab the last files opened and sort by date accessed.
+        #Grab the files owned by the user that were last opened and sort by date accessed.
 
         "Last Five files opened"
         "-----------------------------------"
-        $LastOpenedFiles = Get-ChildItem -Path "C:\Users\$Username" -Recurse -Include @("*.txt","*.pdf","*.docx","*.doc","*.xls","*.ppt") -ErrorAction SilentlyContinue | Sort-Object {$_.LastAccessTime} | select -First 5 
-        if($LastOpenedFiles)
-        {
-            foreach ($file in $LastOpenedFiles){
-                "Filepath: " + $file.FullName
-                "Last Accessed: " + $file.LastAccessTime    
+        $AllOpenedFiles = Get-ChildItem -Path "C:\" -Recurse -Include @("*.txt","*.pdf","*.docx","*.doc","*.xls","*.ppt") -ErrorAction SilentlyContinue | Sort-Object {$_.LastAccessTime}
+        $script:LastOpenedFiles = @()
+        $AllOpenedFiles | % {
+            $owner = $_.GetAccessControl().Owner
+            $owner = $owner.split('\')[-1]
+            if($owner -eq $UserName){
+                $script:LastOpenedFiles += $_
             }
         }
+        if($script:LastOpenedFiles)
+        {
+            $script:LastOpenedFiles | select FullName, LastAccessTime -First 5 | Format-Table -AutoSize
+        }
         "`n"
-        #Search the entire host for any interesting artifacts
+        #Search the entire host for any interesting artifacts owned by the user
         "Interesting Files"
         "----------------------------------"
+        $script:NewestInterestingFiles = @()
         if($keyword)
         {
-            $interestingFiles = Get-ChildItem -Path "C:\Users\$Username" -Recurse -Include @($keyword) -ea SilentlyContinue | where {$_.Mode.StartsWith('d') -eq $False} | Sort-Object {$_.LastAccessTime} 
-            if($interestingFiles){
-                foreach($file in $interestingFiles){
-                    "Filepath: " + $file.FullName 
-                    "Last Accessed: " + $file.LastAccessTime
+            $AllInterestingFiles = Get-ChildItem -Path "C:\" -Recurse -Include $keywords -ea SilentlyContinue | where {$_.Mode.StartsWith('d') -eq $False} | Sort-Object {$_.LastAccessTime}
+            $AllInterestingFiles | ForEach-Object {
+                $owner = $_.GetAccessControl().Owner
+                $owner = $owner.split('\')[-1]
+                if($owner -eq $UserName){
+                    $script:NewestInterestingFiles += $_
                 }
+            } 
+            if($script:NewestInterestingFiles){
+                $script:NewestInterestingFiles | Select-Object FullName, LastAccessTime | Format-Table -AutoSize
             }
         }
         else
         {
-            $interestingFiles = Get-ChildItem -Path "C:\Users\$Username" -Recurse -Include @("*.txt","*.pdf","*.docx","*.doc","*.xls","*.ppt","*pass*","*cred*") -ErrorAction SilentlyContinue | where {$_.Mode.StartsWith('d') -eq $False} | Sort-Object {$_.LastAccessTime} 
-            if($interestingFiles)
-            {
-                foreach($file in $interestingFiles){
-                    "Filepath: " + $file.FullName 
-                    "Last Accessed: " + $file.LastAccessTime
+            $AllInterestingFiles = Get-ChildItem -Path "C:\" -Recurse -Include @("*.txt","*.pdf","*.docx","*.doc","*.xls","*.ppt","*pass*","*cred*") -ErrorAction SilentlyContinue | where {$_.Mode.StartsWith('d') -eq $False} | Sort-Object {$_.LastAccessTime} 
+            $AllInterestingFiles | ForEach-Object {
+                $owner = $_.GetAccessControl().Owner
+                $owner = $owner.split('\')[-1]
+                if($owner -eq $UserName){
+                    $script:NewestInterestingFiles += $_
                 }
+            }
+            if($script:NewestInterestingFiles)
+            {
+                $script:NewestInterestingFiles | Select-Object FullName, LastAccessTime | Format-Table -AutoSize
             }
         }
         "`n"
@@ -178,7 +195,7 @@ function Invoke-WindowsEnum{
 
         "Services"
         "-------------------"
-
+        $script:AllServices = @()
         Get-WmiObject -class win32_service | ForEach-Object{
             $service = New-Object PSObject -Property @{
                 ServiceName = $_.DisplayName
@@ -186,8 +203,10 @@ function Invoke-WindowsEnum{
                 ServicePathtoExe = $_.PathName
                 StartupType = $_.StartMode
             }
-            $service | Format-List 
+            $script:AllServices += $service  
         }
+
+        $script:AllServices | Format-Table -AutoSize
 
 
         "Installed Appications"
@@ -331,8 +350,7 @@ function Invoke-WindowsEnum{
             $NetworkDrive | Format-Table -wrap -auto
         }
 
-        #Enumerate firewall rules and parse out the interesting rules. 
-        #Work-in-progress, coming soon.   
+        #Enumerate firewall rules   
         "`n"
         "Firewall Information"
         "----------------------`n"
@@ -353,7 +371,7 @@ function Invoke-WindowsEnum{
         $fwrules = $fw.rules
 
         "Current Firewall Profile Type in use: $fwprofiletype"
-
+        $script:AllFWRules = @()
         #enumerate the firewall rules
         $fwrules | ForEach-Object{
             #Create custom object to hold properties for each firewall rule 
@@ -368,9 +386,11 @@ function Invoke-WindowsEnum{
                 RemotePort = $_.RemotePorts
             }
 
-            $FirewallRule | Format-List
-        }
+            $script:AllFWRules += $FirewallRule
 
+            
+        } 
+        $script:AllFWRules | Format-Table -Auto
 
     }
 
