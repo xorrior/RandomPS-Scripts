@@ -124,9 +124,9 @@ function Invoke-WmicDriveBy{
   [CmdletBinding()]
   param(
     #Parameter assignment
-    [Parameter(ParameterSetName = URL, Mandatory = $True, Position = 0)] 
+    [Parameter(ParameterSetName = "URL", Mandatory = $True, Position = 0)] 
     [string]$URL,
-    [Parameter(ParameterSetName = File, Mandatory = $True, Position = 0)]
+    [Parameter(ParameterSetName = "File", Mandatory = $True, Position = 0)]
     [string]$UNCPath,
     [Parameter(Mandatory = $False, Position = 1)] 
     [string]$User,
