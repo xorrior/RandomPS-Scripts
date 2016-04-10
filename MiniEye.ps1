@@ -31,7 +31,7 @@
     Try{[System.Reflection.Assembly]::Load($DirectXContent) | Out-Null}
     catch{Throw "Unable to load DirectX Assembly"}
 
-    if($PSCmdlet.ParameterSetName = "Video")
+    if($PSCmdlet.ParameterSetName -eq "Video")
     {
         Write-Verbose "[+]Enumerating Video And Audio Devices"
         $filters = New-Object DirectX.Capture.filters
