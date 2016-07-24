@@ -94,7 +94,7 @@ function Start-WebcamRecorder
 
     #Start the video capture
     try{$VideoCapture.Start()}
-    catch{Write-Verbose "[!]Unable to start capture"; $VideoCapture.Stop()}
+    catch{Write-Verbose "[!]Unable to start capture"; $VideoCapture.Stop();break}
     Write-Verbose "[+] Starting Webcam video capture"
 
     Start-Sleep -seconds $RecordTime
