@@ -35,11 +35,11 @@ function Start-WebcamRecorder
   param
   (
     [Parameter()]
-    [VaildateNotNullOrEmpty()]
+    [ValidateNotNullOrEmpty()]
     [int]$RecordTime,
 
     [Parameter()]
-    [VaildateNotNullOrEmpty()]
+    [ValidateNotNullOrEmpty()]
     [Alias("FilePath")]
     [string]$OutPath
   )
