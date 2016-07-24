@@ -52,7 +52,7 @@ function Start-WebcamRecorder
   #Set the output path to the users APPDATA directory if the OutPath variable 
   if (-not $PSBoundParameters['OutPath']) 
   {
-    OutPath = "$($env:APPDATA)\out.avi"    
+    $OutPath = "$($env:APPDATA)\out.avi"    
   }
 
   if (-not $PSBoundParameters['RecordTime']) 
