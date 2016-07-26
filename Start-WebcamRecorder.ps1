@@ -78,7 +78,7 @@ function Start-WebcamRecorder
   catch [Exception]{$_;Break}
   
   #Gather all filters for Video, Audio, and Compression 
-  if (($filters.VideoInputDevices -ne $null) -and ($filters.AudioInputDevices)) 
+  if (($filters.VideoInputDevices -ne $null) -and ($filters.AudioInputDevices -ne $null)) 
   {
     $VideoInput = $filters.VideoInputDevices[0]
     $AudioInput = $filters.AudioInputDevices[0]
