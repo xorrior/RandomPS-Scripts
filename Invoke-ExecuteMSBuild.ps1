@@ -270,7 +270,7 @@ function Invoke-ExecuteMSBuild
         Invoke-ExecuteMSBuildHelper
 
         #Cleanup our xml file and remove the share.
-        Start-Sleep -Seconds 3
+        Start-Sleep -Seconds 10
         Remove-Item "$DriveLetter\$($FilePath.Split(':')[1])"
         $Network.RemoveNetworkDrive($DriveLetter,$True,$True)
     }
@@ -290,7 +290,7 @@ function Invoke-ExecuteMSBuild
 
         Invoke-ExecuteMSBuildHelper
         #Cleanup our xml file.
-        Start-Sleep -Seconds 3
+        Start-Sleep -Seconds 10
         Remove-Item $RemotePath
     }
     else {
@@ -305,7 +305,7 @@ function Invoke-ExecuteMSBuild
         }
 
         Invoke-ExecuteMSBuildHelper
-        Start-Sleep -Seconds 3
+        Start-Sleep -Seconds 10
         Remove-Item $FilePath -Force
     }
 
