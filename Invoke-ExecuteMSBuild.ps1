@@ -91,7 +91,7 @@ function Invoke-ExecuteMSBuild
             Name = 'Create'
         }
 
-        $cmd = "cmd.exe /c $MSBuildPath $FilePath"
+        $cmd = "$MSBuildPath $FilePath"
 
         $WmiArgs['ArgumentList'] = $cmd
                     
