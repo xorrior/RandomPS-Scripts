@@ -18,6 +18,8 @@
 
     This will retrieve any saved passwords in firefox and then write them out to a file name passwords.txt. 
 
+    Author: Christopher Ross (@xorrior)
+    License: BSD 3-Clause
 
     #>
 

@@ -27,7 +27,9 @@ function Invoke-WindowsEnum{
 
     .LINK
     https://github.com/xorrior/RandomPS-Scripts/blob/master/Invoke-WindowsEnum.ps1
-
+    
+    Author: Christopher Ross (@xorrior)
+    License: BSD 3-Clause
     #>
 
     [CmdletBinding()]
