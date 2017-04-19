@@ -10,7 +10,7 @@ function New-JScriptShell {
 
     .DESCRIPTION
     This script can be used to remotely (or locally) deploy a wmi event subscription with an ActiveScriptEventConsumer. This is not a new technique
-    except for the fact that @tirannido recently released an interesting method that would allow for dynamic loading of a csharp assembly entirely from memory within a jscript file.
+    except for the fact that @tirannido recently released a really interesting method that would allow for dynamic loading of a csharp assembly entirely from memory within a jscript file.
     We can use this technique to remotely deploy csharp assemblies without writing to disk (i.e. SharpPick for powershell, a shellcode loader, .etc). The trigger to deploy
     this consumer is a timer event with the delay specified. Once the timer event has occurred, the JScript payload will be executed. All components of the Wmi subscription will
     be cleaned up.
