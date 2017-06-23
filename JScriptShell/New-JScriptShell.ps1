@@ -138,9 +138,9 @@ function New-JScriptShell {
 
     Write-Verbose "[*] Cleaning up the subscription"
     Start-Sleep -Seconds 20
-    $EventConsumerToCleanup = Get-WmiObject -Namespace root\default -Class ActiveScriptEventConsumer -Filter "Name = '$ConsumerName'" @commonArgs
-    $EventFilterToCleanup = Get-WmiObject -Namespace root\default -Class __EventFilter -Filter "Name = '$FilterName'" @commonArgs
-    $FilterConsumerBindingToCleanup = Get-WmiObject -Namespace root\default -Query "REFERENCES OF {$($EventConsumerToCleanup.__RELPATH)} WHERE ResultClass = __FilterToConsumerBinding" @commonArgs
+    $EventConsumerToCleanup = Get-WmiObject -Namespace root\subscription -Class ActiveScriptEventConsumer -Filter "Name = '$ConsumerName'" @commonArgs
+    $EventFilterToCleanup = Get-WmiObject -Namespace root\subscription -Class __EventFilter -Filter "Name = '$FilterName'" @commonArgs
+    $FilterConsumerBindingToCleanup = Get-WmiObject -Namespace root\subscription -Query "REFERENCES OF {$($EventConsumerToCleanup.__RELPATH)} WHERE ResultClass = __FilterToConsumerBinding" @commonArgs
 
     $EventConsumerToCleanup | Remove-WmiObject
     $EventFilterToCleanup | Remove-WmiObject
