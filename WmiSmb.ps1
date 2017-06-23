@@ -20,6 +20,10 @@ function Invoke-SMBShellcodeLoad {
         [ValidateNotNullOrEmpty()]
         [string]$PipeName,
 
+        [Parameter(Mandatory=$false)]
+        [ValidateNotNullOrEmpty()]
+        [byte[]]$Shellcode,
+
         [parameter(Mandatory=$true, ValueFromPipeline=$true)]
         [ValidateNotNullOrEmpty()]
         [string]$ComputerName,
