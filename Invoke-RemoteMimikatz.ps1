@@ -85,7 +85,7 @@ function Invoke-RemoteMimikatz  {
 
         [parameter(Mandatory = $false)]
         [ValidateNotNullOrEmpty()]
-        [int]$Timeout = 45
+        [int]$Timeout = 45 # I strongly recommend no less than 45 seconds.
     )
 
     $commonArgs = @{}
